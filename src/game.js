@@ -21,14 +21,25 @@ module.exports = class Game {
   constructor (opts) {
     this.playerCount = opts.players
     this.playersJoined = 0
+    this.playersGuessed = 0
 
+    this.questions = require('../res/JEOPARDY_QUESTIONS1.json')
     this.templates = {
       join: load('../res/join.html'),
       wait: load('../res/wait.html'),
       play: load('../res/play.html')
     }
 
+    this.nextQuestion()
     this.players = {}
+  }
+
+  nextQuestion () {
+    const q = this.questions[Math.floor(Math.random() * this.questions.length)]
+
+    this.question = q.question
+    this.answer = q.answer
+    console.log('QUESTION', this.question, 'ANSWER', this.answer)
   }
 
   async getJoin (ctx) {
@@ -128,13 +139,20 @@ module.exports = class Game {
       ctx.body = this.getPlayView(user, 'You have already used your guess!', 'red')
 
     } else if (answer === this.answer) {
-      rewardPlayer(user)
-      await nextRound()
+      this.rewardPlayer(user)
+      await this.nextRound()
       ctx.body = this.getPlayView(user, 'You won! Going to next round.', 'green')
 
     } else {
       this.players[user].played = true
-      ctx.body = this.getPlayView(user, 'Wrong answer!', 'red')
+      this.playersGuessed += 1
+
+      if (this.playersGuessed === this.playerCount) {
+        this.nextRound()
+        ctx.body = this.getPlayView(user, 'Wrong answer! Going to next round', 'yellow')
+      } else {
+        ctx.body = this.getPlayView(user, 'Wrong answer!', 'red')
+      }
     }
   }
 
@@ -142,7 +160,9 @@ module.exports = class Game {
     console.log('rewarding', this.players[user].nick, '!')
   }
 
-  async nextRound (user) {
+  async nextRound () {
+    this.nextQuestion()
     Object.values(this.players).map(v => v.played = false)
+    this.playersGuessed = 0
   }
 }
