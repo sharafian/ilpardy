@@ -1,39 +1,30 @@
 <html>
 <head>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,200,600,700|Droid+Sans+Mono|Titillium+Web:400,300,600" rel="stylesheet" type="text/css" />
+  <link href="/style.css" rel=stylesheet type="text/css" />
   <meta charset="utf-8" />
-  <style>
-    .letter {
-      background-color: #000;
-      color: #fff;
-      width: 1em;
-      height: 1em;
-      margin: 2px;
-      padding: 10px;
-    }
-  </style>
 </head>
 <body>
   <div id="interface" />
-<h1>ILPardy - {{nick}}</h1>
+<h1>ILPardy</h1>
 
-<p style="color:{{messageColor}};">{{message}}</p>
+<table>
+<tr><td class="qa">Q:</td><td id="question">{{question}}</td></tr>
+<tr><td class="qa">A:</td><td id="answer">{{#shuffle}}<div class="letter">{{letter}}</div>{{/shuffle}}</td></tr>
+</table>
 
-<p>The question is: "{{question}}"</p>
-<p>Answer: {{#shuffle}}<span class="letter">{{letter}}</span>{{/shuffle}}</p>
+<p id="message" style="background-color:{{messageColor}};">{{message}}</p>
 
 <form method="post">
   <input name="answer" type="text" placeholder="Answer" />
   <input type="submit" />
 </form>
 
-<br />
-<p>Opponents:</p>
-
-<ul>
-{{#others}}
-  <li>{{nick}}</li>
-{{/others}}
-</ul>
+<div id="players">
+<p>
+  <b>{{nick}}</b>{{#others}}, {{nick}}{{/others}}
+</p>
+</div>
 
   </div>
 </body>

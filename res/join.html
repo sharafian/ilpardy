@@ -1,14 +1,32 @@
 <html>
 <head>
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,200,600,700|Droid+Sans+Mono|Titillium+Web:400,300,600" rel="stylesheet" type="text/css" />
+  <link href="/style.css" rel=stylesheet type="text/css" />
   <meta charset="utf-8" />
 </head>
 <body>
-  <div id="settings" />
+  <div id="interface" />
+<h1>ILPardy</h1>
+
+<p id="message" style="background-color:{{messageColor}};">{{message}}</p>
+
     <form action="join" method="post" >
-      <input name="nick" type="text" placeholder="nickname" />
-      <input name="spsp" type="text" placeholder="SPSP address" />
-      <input name="pass" type="password" placeholder="SPSP password" />
-      <input type="submit" />
+      <table>
+        <tr>
+          <td>Nickname:</td>
+          <td><input name="nick" type="text" placeholder="nickname" /></td>
+        </tr>
+        <tr>
+          <td>SPSP Address:</td>
+          <td><input name="spsp" type="text" placeholder="SPSP address" /></td>
+        </tr>
+        <tr>
+          <td>SPSP Password:</td>
+          <td><input name="pass" type="password" placeholder="SPSP password" /></td>
+        </tr>
+      </table>
+      <br />
+      <input value="Join Game" type="submit" />
     </form>
   </div>
 </body>

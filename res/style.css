@@ -1,0 +1,51 @@
+body {
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+.letter {
+  border: 1px solid #eee;
+  width: 1em;
+  height: 1em;
+  float: left;
+  margin-right: 1px;
+  text-align: center;
+  padding: 10px;
+}
+
+#interface {
+  margin: auto;
+  width: 33em;
+  padding: 30px;
+  border-left: 1px solid #888;
+  border-right: 1px solid #888;
+}
+
+.qa {
+  width: 2em;
+  font-size: 24px;
+  font-family: 'Titillium Web', 'sans';
+}
+
+#question {
+  border: 1px solid #eee;
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+}
+
+td {
+  vertical-align: top;
+}
+
+h1 {
+  text-align: center;
+  font-family: 'Titillium Web', 'sans';
+  font-size: 48px;
+}
+
+#message {
+  padding: 10px;
+  color: #fff;
+}

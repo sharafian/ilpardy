@@ -2,6 +2,7 @@ const Koa = require('koa')
 const Router = require('koa-router')
 const Parser = require('koa-bodyparser')
 const Game = require('./game')
+const util = require('./util')
 
 const app = new Koa()
 const router = Router()
@@ -9,6 +10,12 @@ const parser = Parser()
 
 const game = new Game({
   players: +process.env.ILPARDY_PLAYERS || 2
+})
+
+// style
+const style = util.load('../res/style.css')
+router.get('/style.css', ctx => {
+  ctx.body = style
 })
 
 // register players for the game
