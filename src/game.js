@@ -4,6 +4,7 @@ const path = require('path')
 const Payer = require('./payer')
 const crypto = require('crypto')
 const base64url = require('base64url')
+const util = require('./util')
 
 function load (file) {
   return fs.readFileSync(path.resolve(__dirname, file))
@@ -35,10 +36,14 @@ module.exports = class Game {
   }
 
   nextQuestion () {
-    const q = this.questions[Math.floor(Math.random() * this.questions.length)]
+    let q = { value: '$0', answer: '' }
+    while (q.value !== '$100' || q.answer.length > 10) {
+      q = this.questions[Math.floor(Math.random() * this.questions.length)]
+    }
 
     this.question = q.question
-    this.answer = q.answer
+    this.answer = q.answer.toUpperCase()
+    this.shuffle = util.shuffle(this.answer).map(a => ({ letter: a }))
     console.log('QUESTION', this.question, 'ANSWER', this.answer)
   }
 
@@ -88,16 +93,23 @@ module.exports = class Game {
     })
   }
 
+  getOpponents (user) {
+    const nick = this.players[user].nick
+    return Object.values(this.players)
+      .filter(n => n.nick !== nick)
+  }
+
   getPlayView (user, message, messageColor) {
     const question = this.question
+    const shuffle = this.shuffle
     const nick = this.players[user].nick
-    const others = Object.values(this.players)
-      .map(v => ({ nick: v.nick }))
-      .filter(n => n.nick !== nick)
+    const others = this.getOpponents(user)
+      .map(o => ({ nick: o.nick }))
 
     return mustache.render(this.templates.play, {
       nick,
       others,
+      shuffle,
       question,
       message: message || '',
       messageColor: messageColor || 'black'
@@ -138,8 +150,12 @@ module.exports = class Game {
     if (this.players[user].played) {
       ctx.body = this.getPlayView(user, 'You have already used your guess!', 'red')
 
-    } else if (answer === this.answer) {
+    } else if (answer.toUpperCase() === this.answer) {
       this.rewardPlayer(user)
+        .catch((e) => {
+          console.log('Error giving reward:', e)
+        })
+
       await this.nextRound()
       ctx.body = this.getPlayView(user, 'You won! Going to next round.', 'green')
 
@@ -158,6 +174,15 @@ module.exports = class Game {
 
   async rewardPlayer (user) {
     console.log('rewarding', this.players[user].nick, '!')
+    const receiver = this.players[user].payer.getSPSP()
+
+    for (const other of this.getOpponents(user)) {
+      console.log('pay 0.01 from', other.payer.getSPSP(), 'to', receiver)
+      await (other.payer.pay(receiver, '0.01')
+        .catch((e) => {
+          console.log('Error:', e)
+        }))
+    }
   }
 
   async nextRound () {
