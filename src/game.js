@@ -4,6 +4,7 @@ const crypto = require('crypto')
 const base64url = require('base64url')
 const util = require('./util')
 const uuid = require('uuid')
+const debug = require('debug')('ilpardy')
 
 function makeId (str) {
   return base64url(crypto
@@ -47,7 +48,7 @@ module.exports = class Game {
       try {
         socket.send('reload')
       } catch (e) {
-        console.log('ws error:', e.message)
+        debug('ws error:', e.message)
         delete this.sockets[id] 
       }
     })
@@ -62,7 +63,7 @@ module.exports = class Game {
     this.question = q.question
     this.answer = q.answer.toUpperCase()
     this.shuffle = util.shuffle(this.answer).map(a => ({ letter: a }))
-    console.log('QUESTION', this.question, 'ANSWER', this.answer)
+    debug('QUESTION', this.question, 'ANSWER', this.answer)
   }
 
   getJoinView (msg, color) {
@@ -73,12 +74,12 @@ module.exports = class Game {
   }
 
   async getJoin (ctx) {
-    console.log('GET /join')
+    debug('GET /join')
     ctx.body = this.getJoinView()
   }
 
   async postJoin (ctx) {
-    console.log('POST /join')
+    debug('POST /join')
 
     if (this.playersJoined >= this.playerCount) {
       ctx.body = this.getJoinView('The game is already full', 'orange')
@@ -91,7 +92,7 @@ module.exports = class Game {
     try {
       await payer.connect()
     } catch (e) {
-      console.log('join error:', e.message)
+      debug('join error:', e.message)
       ctx.body = this.getJoinView('Failed to connect to ILP: ' + e.message, 'red')
       return
     }
@@ -104,7 +105,7 @@ module.exports = class Game {
   }
 
   async getWait (ctx) {
-    console.log('GET /wait')
+    debug('GET /wait')
     const { user } = ctx.params
 
     if (!this.players[user]) {
@@ -152,7 +153,7 @@ module.exports = class Game {
   }
 
   async getPlay (ctx) {
-    console.log('GET /play')
+    debug('GET /play')
     const { user } = ctx.params
 
     if (!this.players[user]) {
@@ -168,7 +169,7 @@ module.exports = class Game {
   }
 
   async postPlay (ctx) {
-    console.log('POST /play')
+    debug('POST /play')
     const { user } = ctx.params
 
     if (!this.players[user]) {
@@ -188,7 +189,7 @@ module.exports = class Game {
     } else if (answer.toUpperCase() === this.answer) {
       await (this.rewardPlayer(user)
         .catch((e) => {
-          console.log('Error giving reward:', e)
+          debug('Error giving reward:', e)
         }))
 
       await this.nextRound()
@@ -208,14 +209,14 @@ module.exports = class Game {
   }
 
   async rewardPlayer (user) {
-    console.log('rewarding', this.players[user].nick, '!')
+    debug('rewarding', this.players[user].nick, '!')
     const receiver = this.players[user].payer.getSPSP()
 
     await Promise.all(this.getOpponents(user).map((other) => {
-      console.log('pay 0.10 from', other.payer.getSPSP(), 'to', receiver)
+      debug('pay 0.10 from', other.payer.getSPSP(), 'to', receiver)
       return other.payer.pay(receiver, '0.10')
         .catch((e) => {
-          console.log('Error:', e)
+          debug('Error:', e)
         })
     }))
   }

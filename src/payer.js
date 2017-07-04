@@ -1,6 +1,7 @@
 const ILP = require('ilp')
 const BigNumber = require('bignumber.js')
 const PluginBells = require('ilp-plugin-bells')
+const debug = require('debug')('ilpardy:payer')
 
 module.exports = class Payer {
   constructor (opts) {
@@ -47,6 +48,6 @@ module.exports = class Payer {
     payment.memo = 'ILPardy winner!'
 
     await ILP.SPSP.sendPayment(this.plugin, payment)
-    console.log('sent', amount, 'from', this.spsp, 'to', receiver)
+    debug('sent', amount, 'from', this.spsp, 'to', receiver)
   }
 }
