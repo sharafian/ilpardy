@@ -3,6 +3,7 @@ const Payer = require('./payer')
 const crypto = require('crypto')
 const base64url = require('base64url')
 const util = require('./util')
+const uuid = require('uuid')
 
 function makeId (str) {
   return base64url(crypto
@@ -26,6 +27,30 @@ module.exports = class Game {
 
     this.nextQuestion()
     this.players = {}
+    this.sockets = {}
+  }
+
+  setWsServer (wss) {
+    wss.on('connection', (socket) => {
+      const id = uuid()
+      this.sockets[id] = socket
+
+      socket.on('close', () => {
+        delete this.sockets[id]      
+      })
+    })
+  }
+
+  broadcastWs () {
+    Object.keys(this.sockets).map((id) => {
+      const socket = this.sockets[id]
+      try {
+        socket.send('reload')
+      } catch (e) {
+        console.log('ws error:', e.message)
+        delete this.sockets[id] 
+      }
+    })
   }
 
   nextQuestion () {
@@ -105,10 +130,12 @@ module.exports = class Game {
       .filter(n => n.nick !== nick)
   }
 
-  getPlayView (user, message, messageColor) {
+  async getPlayView (user, message, messageColor) {
     const question = this.question
     const shuffle = this.shuffle
     const nick = this.players[user].nick
+    const balance = await this.players[user].payer.getBalance()
+    const balanceColor = (balance < 0) ? 'red' : 'green'
     const others = this.getOpponents(user)
       .map(o => ({ nick: o.nick }))
 
@@ -117,6 +144,8 @@ module.exports = class Game {
       others,
       shuffle,
       question,
+      balance,
+      balanceColor,
       message: message || '',
       messageColor: messageColor || 'rgba(0,0,0,0)'
     })
@@ -135,7 +164,7 @@ module.exports = class Game {
       ctx.redirect('/wait/' + user)
     }
 
-    ctx.body = this.getPlayView(user)
+    ctx.body = await this.getPlayView(user)
   }
 
   async postPlay (ctx) {
@@ -154,16 +183,16 @@ module.exports = class Game {
     const { answer } = ctx.request.body
 
     if (this.players[user].played) {
-      ctx.body = this.getPlayView(user, 'You have already used your guess!', 'red')
+      ctx.body = await this.getPlayView(user, 'You have already used your guess!', 'red')
 
     } else if (answer.toUpperCase() === this.answer) {
-      this.rewardPlayer(user)
+      await (this.rewardPlayer(user)
         .catch((e) => {
           console.log('Error giving reward:', e)
-        })
+        }))
 
       await this.nextRound()
-      ctx.body = this.getPlayView(user, 'You won! Going to next round.', 'green')
+      ctx.body = await this.getPlayView(user, 'You won! Going to next round.', 'green')
 
     } else {
       this.players[user].played = true
@@ -171,9 +200,9 @@ module.exports = class Game {
 
       if (this.playersGuessed === this.playerCount) {
         this.nextRound()
-        ctx.body = this.getPlayView(user, 'Wrong answer! Going to next round', 'orange')
+        ctx.body = await this.getPlayView(user, 'Wrong answer! Going to next round', 'orange')
       } else {
-        ctx.body = this.getPlayView(user, 'Wrong answer!', 'red')
+        ctx.body = await this.getPlayView(user, 'Wrong answer!', 'red')
       }
     }
   }
@@ -182,18 +211,19 @@ module.exports = class Game {
     console.log('rewarding', this.players[user].nick, '!')
     const receiver = this.players[user].payer.getSPSP()
 
-    for (const other of this.getOpponents(user)) {
-      console.log('pay 0.01 from', other.payer.getSPSP(), 'to', receiver)
-      await (other.payer.pay(receiver, '0.01')
+    await Promise.all(this.getOpponents(user).map((other) => {
+      console.log('pay 0.10 from', other.payer.getSPSP(), 'to', receiver)
+      return other.payer.pay(receiver, '0.10')
         .catch((e) => {
           console.log('Error:', e)
-        }))
-    }
+        })
+    }))
   }
 
   async nextRound () {
     this.nextQuestion()
     Object.values(this.players).map(v => v.played = false)
     this.playersGuessed = 0
+    this.broadcastWs()
   }
 }

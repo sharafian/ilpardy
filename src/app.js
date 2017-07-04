@@ -3,6 +3,7 @@ const Router = require('koa-router')
 const Parser = require('koa-bodyparser')
 const Game = require('./game')
 const util = require('./util')
+const ws = require('ws')
 
 const app = new Koa()
 const router = Router()
@@ -29,8 +30,15 @@ router.get('/wait/:user', game.getWait.bind(game))
 router.get('/play/:user', game.getPlay.bind(game))
 router.post('/play/:user', game.postPlay.bind(game))
 
-app
+const server = app
   .use(parser)
   .use(router.routes())
   .use(router.allowedMethods())
   .listen(process.env.ILPARDY_PORT || 8080)
+
+const wss = new ws.Server({
+  perMessageDeflate: false,
+  server: server
+})
+
+game.setWsServer(wss)
