@@ -13,6 +13,11 @@ const game = new Game({
   players: +process.env.ILPARDY_PLAYERS || 2
 })
 
+// redirect to join
+router.get('/', ctx => {
+  ctx.redirect('/join')
+})
+
 // style
 const style = util.load('../res/style.css')
 router.get('/style.css', ctx => {
