@@ -7,13 +7,17 @@
 window.onload = function () {
 
   var socket = new WebSocket('ws://' + location.host)
-  socket.addEventListener('close', function (event) {
+  function reload () {
     window.location = window.location
-  });
+  }
 
-  socket.addEventListener('message', function (event) {
-    window.location = window.location
-  });
+  socket.addEventListener('close', reload)
+  socket.addEventListener('message', reload)
+
+  document.getElementById('send_answer').onsubmit = function () {
+    socket.removeEventListener('close', reload)
+    socket.removeEventListener('message', reload)
+  }
 }
   </script>
 </head>
@@ -34,7 +38,7 @@ window.onload = function () {
 
 <p id="message" style="background-color:{{messageColor}};">{{message}}</p>
 
-<form method="post">
+<form id="send_answer" method="post">
   <input name="answer" type="text" placeholder="Answer" />
   <input type="submit" />
 </form>
