@@ -1,15 +1,8 @@
 const mustache = require('mustache')
-const fs = require('fs')
-const path = require('path')
 const Payer = require('./payer')
 const crypto = require('crypto')
 const base64url = require('base64url')
 const util = require('./util')
-
-function load (file) {
-  return fs.readFileSync(path.resolve(__dirname, file))
-    .toString('utf8')
-}
 
 function makeId (str) {
   return base64url(crypto
@@ -26,9 +19,9 @@ module.exports = class Game {
 
     this.questions = require('../res/JEOPARDY_QUESTIONS1.json')
     this.templates = {
-      join: load('../res/join.html'),
-      wait: load('../res/wait.html'),
-      play: load('../res/play.html')
+      join: util.load('../res/join.html'),
+      wait: util.load('../res/wait.html'),
+      play: util.load('../res/play.html')
     }
 
     this.nextQuestion()
@@ -47,13 +40,26 @@ module.exports = class Game {
     console.log('QUESTION', this.question, 'ANSWER', this.answer)
   }
 
+  getJoinView (msg, color) {
+    return mustache.render(this.templates.join, {
+      message: msg || '',
+      messageColor: color || 'rgba(0,0,0,0)'
+    })
+  }
+
   async getJoin (ctx) {
     console.log('GET /join')
-    ctx.body = mustache.render(this.templates.join, {})
+    ctx.body = this.getJoinView()
   }
 
   async postJoin (ctx) {
     console.log('POST /join')
+
+    if (this.playersJoined >= this.playerCount) {
+      ctx.body = this.getJoinView('The game is already full', 'orange')
+      return
+    }
+
     const { nick, spsp, pass } = ctx.request.body
     const payer = new Payer({ spsp, pass })
 
@@ -61,7 +67,7 @@ module.exports = class Game {
       await payer.connect()
     } catch (e) {
       console.log('join error:', e.message)
-      ctx.redirect('/join')
+      ctx.body = this.getJoinView('Failed to connect to ILP: ' + e.message, 'red')
       return
     }
   
@@ -112,7 +118,7 @@ module.exports = class Game {
       shuffle,
       question,
       message: message || '',
-      messageColor: messageColor || 'black'
+      messageColor: messageColor || 'rgba(0,0,0,0)'
     })
   }
 
@@ -165,7 +171,7 @@ module.exports = class Game {
 
       if (this.playersGuessed === this.playerCount) {
         this.nextRound()
-        ctx.body = this.getPlayView(user, 'Wrong answer! Going to next round', 'yellow')
+        ctx.body = this.getPlayView(user, 'Wrong answer! Going to next round', 'orange')
       } else {
         ctx.body = this.getPlayView(user, 'Wrong answer!', 'red')
       }

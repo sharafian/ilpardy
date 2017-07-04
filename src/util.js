@@ -1,3 +1,6 @@
+const fs = require('fs')
+const path = require('path')
+
 function shuffle (str) {
   const a = str.split(""),
     n = a.length;
@@ -12,6 +15,12 @@ function shuffle (str) {
   return a
 }
 
+function load (file) {
+  return fs.readFileSync(path.resolve(__dirname, file))
+    .toString('utf8')
+}
+
 module.exports = {
-  shuffle
+  shuffle,
+  load
 }
