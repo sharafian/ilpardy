@@ -1,4 +1,5 @@
 const ILP = require('ilp')
+const BigNumber = require('bignumber.js')
 const PluginBells = require('ilp-plugin-bells')
 
 module.exports = class Payer {
@@ -26,6 +27,15 @@ module.exports = class Payer {
     })
 
     await this.plugin.connect()
+    this.startBalance = +(await this.plugin.getBalance())
+    this.scale = this.plugin.getInfo().currencyScale
+  }
+
+  async getBalance () {
+    return new BigNumber(await this.plugin.getBalance())
+      .sub(this.startBalance)
+      .shift(-this.scale)
+      .toFixed(3)
   }
 
   async pay (receiver, amount) {

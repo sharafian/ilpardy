@@ -3,10 +3,29 @@
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,200,600,700|Droid+Sans+Mono|Titillium+Web:400,300,600" rel="stylesheet" type="text/css" />
   <link href="/style.css" rel=stylesheet type="text/css" />
   <meta charset="utf-8" />
+  <script>
+window.onload = function () {
+
+  var socket = new WebSocket('ws://' + location.host)
+  socket.addEventListener('close', function (event) {
+    window.location = window.location
+  });
+
+  socket.addEventListener('message', function (event) {
+    window.location = window.location
+  });
+}
+  </script>
 </head>
 <body>
   <div id="interface" />
-<h1>ILPardy</h1>
+<div id="big">
+<div id="bigleft">ILPardy</div>
+<div id="bigright" style="color:{{balanceColor}};">{{balance}}</div>
+</div>
+
+<br />
+<br />
 
 <table>
 <tr><td class="qa">Q:</td><td id="question">{{question}}</td></tr>

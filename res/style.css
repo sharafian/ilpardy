@@ -49,3 +49,15 @@ h1 {
   padding: 10px;
   color: #fff;
 }
+
+#bigleft {
+  float: left;
+  text-align: left;
+  font-size: 48px;
+}
+
+#bigright {
+  float: right;
+  text-align: right;
+  font-size: 48px;
+}
